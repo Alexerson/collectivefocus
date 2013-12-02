@@ -1,0 +1,140 @@
+<head>
+  <title>Collective Focus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
+
+  <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
+</head>
+
+<body>
+  {{> header}}
+  <div class="container">
+  {{renderPage}}
+  </div>
+  {{> footer}}
+</body>
+
+<template name="header">
+  <header class="navbar navbar-default navbar-fixed-top navbar-inverse" role="navigation">
+    <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">Collective Focus</a>
+    </div>
+
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Link</a></li>
+        <li><a href="#">Link</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Action</a></li>
+            <li><a href="#">Another action</a></li>
+            <li><a href="#">Something else here</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Separated link</a></li>
+            <li class="divider"></li>
+            <li><a href="#">One more separated link</a></li>
+          </ul>
+        </li>
+      </ul>
+      <form class="navbar-form navbar-left" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search">
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#">Link</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Action</a></li>
+            <li><a href="#">Another action</a></li>
+            <li><a href="#">Something else here</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Separated link</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div><!-- /.navbar-collapse -->
+    </div>
+  </header>
+</template>
+
+<template name="footer">
+  <footer></footer>
+</template>
+
+<template name="home">
+  <div class="page-header">
+    <h1>Collective Focus <small>People doing stuff at the same time. Oh yeah.</small></h1>
+  </div>
+  <a id="add_team" title="Add a new team"><i class="fa fa-plus"></i></a>
+  {{#each team}}
+  <div class="team">
+    {{> team_summary}}
+  </div>
+  {{/each}}
+</template>
+
+<template name="team_summary">
+  <div class="timer" data-end="{{time}}"></div>
+  <h3>{{name}}</h3>
+  {{#each first_members}}
+  <div class="member">
+    <img src="{{avatar}}" />
+    <span class="username">{{username}}</span> is
+    <span class="action">{{current_action}}</span>
+  </div>
+  {{/each}}
+  {{#if remaining_members_count}}
+  <div class="etc">... et {{member_count}} autres</div>
+  {{/if}}
+  <a href="/team/{{_id}}">join this focus group</a>
+</template>
+
+<template name="team">
+  <div class="jumbotron">
+    {{#if time}}
+    <div class="timer" data-end="{{time}}"></div>
+    {{#if my_focus }}
+    <h3>You are focusing on <strong>{{my_focus}}</strong></h3>
+    {{else}}
+    <h3>You are not focusing</h3>
+    {{/if}}
+    {{else}}
+    <div class="timer empty"></div>
+    <h3>What will you focus on?</h3>
+    <div class="col-lg-6">
+      <div class="input-group">
+        <input type="text" class="form-control" name="task">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="button">Go!</button>
+        </span>
+      </div><!-- /input-group -->
+    </div><!-- /.col-lg-6 -->
+    {{/if}}
+  </div>
+  <h2>{{name}}</h2>
+  {{#each all_members}}
+  <div class="member" data-focus="{{focus}}">
+    <img src="{{avatar}}" />
+  </div>
+  {{/each}}
+
+
+</template>

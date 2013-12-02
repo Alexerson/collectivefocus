@@ -1,0 +1,15 @@
+Meteor.startup(function () {
+    // code to run on server at startup
+
+    // server: populate collections with some initial documents
+    Teams.insert({name: "Cool '80"});
+});
+
+Meteor.publish("all-teams", function () {
+    return Teams.find(); // everything
+});
+
+Meteor.publish("tasks", function (teamId) {
+//  check(teamId, String);
+  return Tasks.find({team: teamId});
+});
