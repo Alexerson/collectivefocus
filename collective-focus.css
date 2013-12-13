@@ -2,3 +2,15 @@
 body {
     padding-top:70px;
 }
+
+.fa-circle.connected {
+    color:green;
+}
+
+.fa-circle.waiting, .fa-circle.connecting {
+    color:yellow;
+}
+
+.fa-circle.failed {
+    color:red;
+}

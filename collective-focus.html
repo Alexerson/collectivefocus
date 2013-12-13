@@ -8,6 +8,9 @@
   <!-- Latest compiled and minified JavaScript -->
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"></script>
 
+  <script src="/raphael-min.js"></script>
+
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
   <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
 </head>
 
@@ -30,7 +33,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="/">Collective Focus</a>
+      <a class="navbar-brand" href="/"><i class="fa fa-circle {{status}}"></i> Collective Focus</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
@@ -83,7 +86,7 @@
   <div class="page-header">
     <h1>Collective Focus <small>People doing stuff at the same time. Oh yeah.</small></h1>
   </div>
-  <a id="add_team" title="Add a new team"><i class="fa fa-plus"></i></a>
+  <a id="add-team" title="Add a new team"><i class="fa fa-plus"></i></a>
   {{#each team}}
   <div class="team">
     {{> team_summary}}
@@ -92,7 +95,7 @@
 </template>
 
 <template name="team_summary">
-  <div class="timer" data-end="{{time}}"></div>
+  <div class="timer" data-completion="{{completion}}"></div>
   <h3>{{name}}</h3>
   {{#each first_members}}
   <div class="member">
@@ -108,33 +111,82 @@
 </template>
 
 <template name="team">
+  {{#if current_team}}
+  <h2>{{current_team.name}}</h2>
   <div class="jumbotron">
-    {{#if time}}
-    <div class="timer" data-end="{{time}}"></div>
-    {{#if my_focus }}
-    <h3>You are focusing on <strong>{{my_focus}}</strong></h3>
+    {{#if current_focus}}
+
+    <div class="timer" data-completion="{{completion}}">{{completion}}</div>
+    {{#if is_current_focus_running}}
+
+    {{#if current_task}}
+    <h3>You are focusing on <strong>{{current_task.label}}</strong></h3>
     {{else}}
     <h3>You are not focusing</h3>
     {{/if}}
+
     {{else}}
-    <div class="timer empty"></div>
+
+    {{#if is_current_focus_finished}}
+
+    {{#if current_task}}
+    <h3>Done! How was your focus on <strong>{{current_task.label}}</strong>?</h3>
+    <div class="col-lg-6">
+      <button class="btn btn-default focus-value" type="button" data-task="{{current_task._id}}" value="0">0</button>
+      <button class="btn btn-default focus-value" type="button" data-task="{{current_task._id}}" value="33">1</button>
+      <button class="btn btn-default focus-value" type="button" data-task="{{current_task._id}}" value="67">2</button>
+      <button class="btn btn-default focus-value" type="button" data-task="{{current_task._id}}" value="100">3</button>
+    </div><!-- /.col-lg-6 -->
+    {{else}}
+    Waiting everyone to rate his focus.
+    {{/if}}
+
+    {{else}}  {{!-- is_finished --}}
+
+    {{#if Meteor.userId}}
+
     <h3>What will you focus on?</h3>
     <div class="col-lg-6">
       <div class="input-group">
-        <input type="text" class="form-control" name="task">
-        <span class="input-group-btn">
-          <button class="btn btn-default" type="button">Go!</button>
-        </span>
+        <form id="next-focus" data-focus="{{current_focus._id}}">
+          <input type="text" class="form-control" name="task" value="{{current_task.label}}">
+          <span class="input-group-btn">
+            <button type="submit" id="focus-define" class="btn btn-default">Go!</button>
+          </span>
+        </form>
       </div><!-- /input-group -->
     </div><!-- /.col-lg-6 -->
+    {{#if current_task}}
+    The focus will begin shortly. You can update your task until the beggining of the focus.
+    {{else}} {{!-- current_task --}}
+    The focus will begin shortly. Choose a task.
     {{/if}}
+    {{else}} {{!-- user --}}
+    Pas connecté: login !
+    {{/if}}  {{!-- user --}}
+
+    {{/if}}  {{!-- is_finished --}}
+
+    {{/if}}  {{!-- current_task --}}
+
+    {{else}} {{!-- current_focus --}}
+
+    <h3>No focus right now.</h3>
+    <button id="focus-start" class="btn btn-default">Start a new one</button>
+
+    <h3>Stats</h3>
+    <div class="stats-chart"></div>
+
+    {{/if}}  {{!-- current_focus --}}
   </div>
-  <h2>{{name}}</h2>
   {{#each all_members}}
   <div class="member" data-focus="{{focus}}">
     <img src="{{avatar}}" />
   </div>
   {{/each}}
 
+  {{else}} {{!-- team --}}
+  404
+  {{/if}}
 
 </template>

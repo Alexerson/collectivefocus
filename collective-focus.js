@@ -1,6 +1,7 @@
 Teams = new Meteor.Collection("teams");
-Tasks = new Meteor.Collection("tasks");
 Focus = new Meteor.Collection("focus");
+Tasks = new Meteor.Collection("tasks");
+Users = Meteor.users;
 
 if (typeof String.prototype.trim !== 'function') {
     String.prototype.trim = function () {
