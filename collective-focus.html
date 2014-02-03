@@ -38,7 +38,7 @@
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav">
+<!--      <ul class="nav navbar-nav">
         <li class="active"><a href="#">Link</a></li>
         <li><a href="#">Link</a></li>
         <li class="dropdown">
@@ -60,7 +60,10 @@
         </div>
         <button type="submit" class="btn btn-default">Submit</button>
       </form>
+-->
       <ul class="nav navbar-nav navbar-right">
+	<li><a href="/login">{{user}}</a></li>
+<!--
         <li><a href="#">Link</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
@@ -71,7 +74,7 @@
             <li class="divider"></li>
             <li><a href="#">Separated link</a></li>
           </ul>
-        </li>
+        </li>-->
       </ul>
     </div><!-- /.navbar-collapse -->
     </div>
@@ -94,6 +97,28 @@
   {{/each}}
 </template>
 
+<template name="login">
+  <h1>Login page</h1>
+
+  {{#if currentUser}}
+  Logged in as : {{user}}
+  <a href="/login" id="logout">Logout</a>
+  {{else}}
+  <form role="form" id="login">
+    <div class="form-group">
+      <label for="email">Email address</label>
+      <input type="email" class="form-control" id="email" placeholder="Enter email">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" required="required" class="form-control" id="password" placeholder="Password">
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+  </form>
+  {{/if}}
+
+</template>
+
 <template name="team_summary">
   <div class="timer" data-completion="{{completion}}"></div>
   <h3>{{name}}</h3>
@@ -105,7 +130,7 @@
   </div>
   {{/each}}
   {{#if remaining_members_count}}
-  <div class="etc">... et {{member_count}} autres</div>
+  <div class="etc">... and {{member_count}} others</div>
   {{/if}}
   <a href="/team/{{_id}}">join this focus group</a>
 </template>

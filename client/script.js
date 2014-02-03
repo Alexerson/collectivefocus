@@ -28,6 +28,7 @@ Meteor.Router.add({
         Session.set('currentTeamId', id);
         return 'team';
     },
+    '/login': 'login',
 /*    '/user/:id': function(id) {
         Session.set('currentTeamId', id);
         return 'user_detail';
@@ -47,7 +48,11 @@ Meteor.Router.beforeRouting = function(route) {
 Meteor.setInterval(function(){Session.set('currentTime', new Date())}, 1000);
 
 Template.header.user = function () {
-    return Meteor.user();
+    if (Meteor.user()) {
+	return Meteor.user().username;
+    } else {
+	return "Non connecté";
+    }
 };
 Template.header.status = function() {
     return Meteor.status().status
@@ -57,11 +62,29 @@ Template.header.status = function() {
 Template.header.first_name = function () { return Meteor.user().profile.first_name; };
 Template.header.avatar = function () { return Meteor.user().profile.avatar || "avatar.png"; };
 
-Template.header.events({
-    'click a#login' : function () { Meteor.login(); },
-    'click a#logout' : function () { Meteor.logout(); }
-});
+Template.login.user = Template.header.user;
 
+Template.login.events({
+
+    'click a#logout':function() { Meteor.logout(); },
+
+    'submit form#login' : function (ev) {
+        var $form = $(ev.currentTarget);
+	Meteor.loginWithPassword(
+	    {email:$form.find("#email").val()},
+	    $form.find("#password").val(),
+	    function(arg) {
+		if (!arg) { // success
+
+		} else { //error
+		    $form.find("#email").val("");
+		    $form.find("#password").val("");
+		}
+	    });
+        return false;
+    }
+
+});
 
 Template.home.team = function() {
     return Teams.find().fetch(); // synchronous!
@@ -122,7 +145,7 @@ Template.team.events({
         if (focus && focus.end_time >= start) {return false;}
         start.setSeconds(start.getSeconds()+30)
         var end = new Date(start);
-        end.setMinutes(end.getMinutes()+25)
+        end.setMinutes(end.getMinutes()+1)
         Focus.insert({team:Session.get('currentTeamId'), start_time: start, end_time: end, done:false});
 
     },

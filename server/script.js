@@ -2,16 +2,17 @@ Meteor.startup(function () {
     // code to run on server at startup
 
     // server: populate collections with some initial documents
-//    Teams.remove({});
-//    Focus.remove({});
-//    Tasks.remove({});
-
+    Teams.remove({});
+    Focus.remove({});
+    Tasks.remove({});
 
     if (Teams.find({}).count() === 0) {
         Teams.insert({name: "Cool '80", members:[]});
     }
     if (Users.find({}).count() === 0) {
-        Accounts.createUser({email: "alexandre@e-180.com", password:"123456"});
+        Accounts.createUser({username:"alexandre", email: "alexandre@e-180.com", password:"123456"});
+        Accounts.createUser({username:"christine", email: "christine@e-180.com", password:"123456"});
+        Accounts.createUser({username:"simon", email: "simon@espacestemps.ca", password:"123456"});
     }
 });
 
@@ -30,8 +31,6 @@ Meteor.publish("focus-tasks", function (focusId) {
 Meteor.publish("user-tasks", function (userId) {
   return Tasks.find({user: userId});
 });
-
-
 
 // REMOVE
 Meteor.publish("all-focus", function () {return Focus.find();});
