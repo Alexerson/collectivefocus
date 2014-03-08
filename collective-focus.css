@@ -1,6 +1,12 @@
 /* CSS declarations go here */
+@import url(http://fonts.googleapis.com/css?family=Roboto:100);
+
 body {
     padding-top:70px;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: 'Roboto', sans-serif;
 }
 
 .fa-circle.connected {
@@ -13,4 +19,63 @@ body {
 
 .fa-circle.failed {
     color:red;
+}
+
+div.team-summary {
+    padding:0 20px 20px 20px ;
+    margin-bottom:20px;
+    border-radius:5px;
+    border:1px solid rgb(200,200,200);
+    float:left;
+    background:rgb(220,220,220);
+}
+
+div.team-summary a {
+    position:relative;
+    z-index:1;
+}
+
+input[type=text] {
+    line-height:2.4em;
+    height:2.4em;
+}
+
+div.focus {
+    position:relative;
+    width:100%;
+    margin-bottom:20px;
+    border-radius:5px;
+    border:1px solid rgb(200,200,200);
+    float:left;
+    background:rgb(150,150,150);
+}
+div.focus h3, div.focus p, div.focus button {
+    position:relative;
+    z-index:1;
+}
+
+div.completion {
+    position:absolute; top:0; bottom:0;
+}
+
+div.countdown {
+    font-family: 'Roboto', sans-serif;
+    padding: 0px 10px;
+    position:relative;
+    z-index:1;
+    font-size: 72px;
+    color:white;
+}
+
+div.members {
+    text-align:center;
+}
+
+a.member {
+    margin-top: 10px;
+    margin-right:10px;
+}
+
+div.clear {
+    clear:both;
 }

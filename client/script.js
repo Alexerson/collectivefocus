@@ -20,7 +20,57 @@ Deps.autorun(function () {
     }*/
 });
 
-//CryptoJS.MD5("Alexandre@e-180.com".trim().toLowerCase()).toString(CryptoJS.enc.Hex)
+var avatar = function(user) {
+
+    _.defer(function() {$("[data-toggle=tooltip]").tooltip()});
+
+    if (user.services.twitter) {
+	if (user.services.twitter.profile_image_url) {
+	    return user.services.twitter.profile_image_url;
+	}
+    }
+    if (user.profile && user.profile.md5) {
+	return "http://www.gravatar.com/avatar/"+user.profile.md5+"?s=50&d=identicon";
+    }
+    var initials = "AS";
+    return "http://placehold.it/50x50&text="+initials;
+}
+
+var username = function(user) {
+    return user.profile && user.profile.name || user.username || user.email ;
+}
+
+var members = function(team, limit) {
+    var focus = Focus.find({team: team._id});
+    var users_id = [];
+    focus.forEach(function(focus) {
+	var tasks = Tasks.find({focus: focus._id});
+	tasks.forEach(function (task) {
+	    users_id.push(task.user);
+	});
+    });
+    users_id = _.unique(users_id);
+    if (limit) {
+	return Users.find({_id: {$in: users_id}}, {limit:limit});
+    }
+    return Users.find({_id: {$in: users_id}});
+};
+
+var current_task = function (user, team_id) {
+    if (!user) { return; }
+    var focus = Focus.findOne({team: team_id, done:false}, {sort: {start_time: -1}});
+    if (focus) {
+	return Tasks.findOne({focus: focus._id, user:user._id});
+    }
+}
+
+var completion = function(team_id) {
+    var focus = Focus.findOne({team: team_id}, { sort: { start_time: -1 }});
+    if (!focus) {return 0;}
+    if (focus.start_time >= Session.get('currentTime')) {return (Session.get('currentTime') - focus.start_time)/300;}
+    if (focus.end_time < Session.get('currentTime')) {return 100;}
+    return 100 * (Session.get('currentTime') - focus.start_time) / (focus.end_time - focus.start_time)
+}
 
 Meteor.Router.add({
     '/': 'home',
@@ -28,7 +78,6 @@ Meteor.Router.add({
         Session.set('currentTeamId', id);
         return 'team';
     },
-    '/login': 'login',
 /*    '/user/:id': function(id) {
         Session.set('currentTeamId', id);
         return 'user_detail';
@@ -60,45 +109,24 @@ Template.header.status = function() {
 
 
 Template.header.first_name = function () { return Meteor.user().profile.first_name; };
-Template.header.avatar = function () { return Meteor.user().profile.avatar || "avatar.png"; };
-
-Template.login.user = Template.header.user;
-
-Template.login.events({
-
-    'click a#logout':function() { Meteor.logout(); },
-
-    'submit form#login' : function (ev) {
-        var $form = $(ev.currentTarget);
-	Meteor.loginWithPassword(
-	    {email:$form.find("#email").val()},
-	    $form.find("#password").val(),
-	    function(arg) {
-		if (!arg) { // success
-
-		} else { //error
-		    $form.find("#email").val("");
-		    $form.find("#password").val("");
-		}
-	    });
-        return false;
-    }
-
-});
+Template.header.avatar = function () { return avatar(Meteor.user()); };
 
 Template.home.team = function() {
-    return Teams.find().fetch(); // synchronous!
+    return Teams.find().fetch();
 }
 
-Template.team_summary.first_members = function() {
-    return Users.find({_id: {$in: this.members}}, {limit:3});
+Template.team_summary.members = function() { return members(this); }
+Template.team_summary.first_members = function() { return members(this, 3); }
+Template.team_summary.completion = function() { return completion(this._id); }
+Template.team_summary.username = function() { return username(this); }
+Template.team_summary.avatar = function () { return avatar(this); }
+Template.team_summary.current_task = function(user, team) {
+    var task = current_task(user, team._id);
+    return task && task.label;
 }
 
 Template.team_summary.remaining_members_count = function() {
-    if (this.members.length > 3) {
-        return this.members.length - 3;
-    }
-    return 0
+    return Math.max(members(this).count() - 3, 0);
 }
 
 Template.team.current_team = function() {
@@ -121,21 +149,39 @@ Template.team.is_current_focus_finished = function() {
     return focus.end_time < Session.get('currentTime');
 }
 
-Template.team.completion = function() {
-    var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
-    if (!focus) {return 0;}
-    if (focus.start_time >= Session.get('currentTime')) {return (Session.get('currentTime') - focus.start_time)/600;}
-    if (focus.end_time < Session.get('currentTime')) {return 1;}
-    return (Session.get('currentTime') - focus.start_time) / (focus.end_time - focus.start_time)
+Template.team.completion = function() { return completion(Session.get('currentTeamId')); }
+Template.team.beforeCompletion = function() { return -completion(Session.get('currentTeamId')); }
 
+Template.team.countdown = function() {
+    var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
+    if (focus) {
+	var last = focus.end_time - Session.get('currentTime');
+	var minutes = Math.floor(last / 60000);
+	var seconds = Math.floor(last / 1000) % 60;
+	if (seconds < 10) {seconds = "0"+seconds;}
+	return minutes + ":" + seconds;
+    }
 }
 
 Template.team.current_task = function() {
-    var focus = Focus.findOne({team: Session.get('currentTeamId')});
-    if (Meteor.userId()) {
-        return Tasks.findOne({focus: focus._id, user:Meteor.userId(), value:undefined});
-    }
+    return current_task(Meteor.user(), Session.get('currentTeamId'));
 }
+
+Template.team.all_members = function() {
+    var focus = Focus.find({team: Session.get('currentTeamId')});
+    var users_id = [];
+    focus.forEach(function(focus) {
+	var tasks = Tasks.find({focus: focus._id});
+	tasks.forEach(function (task) {
+	    users_id.push(task.user);
+	});
+    });
+    users_id = _.unique(users_id);
+    return Users.find({_id: {$in: users_id}});
+}
+
+Template.team.username = function() { return username(this); }
+Template.team.avatar = function () { return avatar(this); }
 
 Template.team.events({
     'click button#focus-start' : function (ev) {
@@ -145,7 +191,7 @@ Template.team.events({
         if (focus && focus.end_time >= start) {return false;}
         start.setSeconds(start.getSeconds()+30)
         var end = new Date(start);
-        end.setMinutes(end.getMinutes()+1)
+        end.setMinutes(end.getMinutes()+25)
         Focus.insert({team:Session.get('currentTeamId'), start_time: start, end_time: end, done:false});
 
     },
@@ -165,10 +211,13 @@ Template.team.events({
         var $button = $(ev.currentTarget);
         var task = Tasks.findOne({_id:$button.attr("data-task")});
         Tasks.update({_id: task._id}, {$set: {value: parseInt($button.val())}});
-
-        if ( Tasks.find({focus:task.focus, value:undefined}).count() == 0) {
+	if ( Tasks.find({focus:task.focus, value:undefined}).count() == 0) {
             Focus.update({_id: task.focus}, {$set: {done:true}});
-        }
+	}
+    },
+    'click button.skip-evaluation' : function (ev) {
+	var $button = $(ev.currentTarget);
+	Focus.update({_id:$button.attr("data-focus")}, {$set: {done:true}});
     }
 });
 

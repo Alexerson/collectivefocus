@@ -10,3 +10,10 @@ underscore
 accounts-base
 router
 accounts-password
+accounts-facebook
+bootstrap
+accounts-twitter
+accounts-github
+autopublish
+accounts-ui
+crypto-md5
