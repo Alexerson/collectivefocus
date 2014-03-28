@@ -10,9 +10,6 @@ function generate_color() {
 var focus_length = 25 * 60; // temps en secondes
 var before_focus = 30;
 
-var focus_length = 25; // temps en secondes
-var before_focus = 5;
-
 var update_focus = function(focus) {
 
     if (focus.state == "WAITING") {
@@ -26,7 +23,13 @@ var update_focus = function(focus) {
     Focus.update({_id: focus._id}, {$set: {remaining: focus.remaining}});
 
     if (focus.state == "RUNNING") {
-	//TODO:utiliser le start time dans le calcul
+		var tasks = Tasks.find({focus: focus._id});
+		if (tasks.count() == 0){
+			focus.state = "DONE";
+		    Focus.update({_id: focus._id}, {$set: {state: focus.state}});
+		    return;
+		}
+	}	
 	if (focus.remaining <= 0) {
 
 	    var tasks = Tasks.find({focus: focus._id, value:undefined});
@@ -38,7 +41,6 @@ var update_focus = function(focus) {
 	    Focus.update({_id: focus._id}, {$set: {state: focus.state}});
 	    return;
 	}
-    }
 
     Meteor.setTimeout(function() {update_focus(focus);},1000);
 };

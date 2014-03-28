@@ -107,10 +107,13 @@
   {{/each}}
 </template>
 
+<template name="completion">
+  <div class="completion" style="left:0; width:{{completion}}%;
+         background:{{color1}}; "></div>
+</template>
 
 <template name="team_summary">
-  <div class="completion" style="left:0; width:{{completion}}%;
-				 background:{{color1}}; "></div>
+  {{> completion}}
   <a href="/team/{{_id}}">
     <h3>{{name}}</h3>
   </a>
@@ -150,13 +153,39 @@
 
 <template name="team">
   {{#if current_team}}
-  {{#if current_task}}
-  <h2>Focused on: {{current_task.label}}</h2>
-  {{else}}
-  <h2>{{current_team.name}}</h2>
-  {{/if}}
+
+  <h2>
+    {{> team_title}}
+  </h2>
 
   <div class="focus">
+  {{> focus}}
+  </div>
+
+  <div class="members">
+    {{> members}}
+  </div>
+
+  <div class="stats">
+    {{> stats}}
+  </div>
+
+
+  {{else}} {{!-- team --}}
+  404
+  {{/if}}
+
+</template>
+
+<template name="team_title">
+  {{#if current_task}}
+  Focused on: {{current_task.label}}
+  {{else}}
+  {{current_team.name}}
+  {{/if}}
+</template>
+
+<template name="focus">
     {{#if current_focus}}
 
     <div class="completion" style="left:0; width:{{completion}}%; background:rgba(0, 220, 220, 0.5);"></div>
@@ -228,45 +257,32 @@
     {{/if}}  {{!-- user --}}
 
     {{/if}}  {{!-- current_focus --}}
-  </div><div class="clear"></div>
+</template>
 
-  <div class="members">
+<template name="members">
     {{#each all_members}}
     <a class="member" href="/user/{{_id}}">
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="54px" height="54px" viewBox="0 0 54 54" title="{{username}}" data-toggle="tooltip" data-placement="bottom" >
-	<defs>
-	  <clipPath id="circle">
+  <defs>
+    <clipPath id="circle">
             <circle cx="25" cy="25" r="25"></circle>
-	  </clipPath>
-	</defs>
-	<circle cx="27" cy="27" r="25" stroke="yellow" stroke-width="3" />
-	<image xlink:href="{{avatar}}" width="50" height="50" clip-path="url(#circle)" transform="translate(2,2)" />
+    </clipPath>
+  </defs>
+  <circle cx="27" cy="27" r="25" stroke="yellow" stroke-width="3" />
+  <image xlink:href="{{avatar}}" width="50" height="50" clip-path="url(#circle)" transform="translate(2,2)" />
       </svg>
     </a>
     {{/each}}
-  </div>
-
-  {{#if current_focus}}
-
-  {{else}}
-
-  <h3>Stats</h3>
-  <div class="stats-chart">
-    {{> stats}}
-  </div>
-
-  {{/if}}
-
-  {{else}} {{!-- team --}}
-  404
-  {{/if}}
-
 </template>
 
 <template name="stats">
+  {{#if current_focus}}
+  {{else}}
+  <h3>Stats</h3>
   {{#each old_tasks}}
   <div class="user">
   {{user}} -- {{values}}
   </div>
   {{/each}}
+  {{/if}}
 </template>

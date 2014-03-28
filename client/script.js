@@ -6,9 +6,6 @@
 var focus_length = 25 * 60; // temps en secondes
 var before_focus = 30;
 
-var focus_length = 25; // temps en secondes
-var before_focus = 5;
-
 var running = false;
 
 Notification.requestPermission();
@@ -51,15 +48,7 @@ var username = function(user) {
 }
 
 var members = function(team, limit) {
-    var focus = Focus.find({team: team._id});
-    var users_id = [];
-    focus.forEach(function(focus) {
-	var tasks = Tasks.find({focus: focus._id});
-	tasks.forEach(function (task) {
-	    users_id.push(task.user);
-	});
-    });
-    users_id = _.unique(users_id);
+    var users_id = _.unique(team.members);
     if (limit) {
 	return Users.find({_id: {$in: users_id}}, {limit:limit});
     }
@@ -78,11 +67,11 @@ var completion = function(team_id) {
     var focus = Focus.findOne({team: team_id}, { sort: { start_time: -1 }});
     if (!focus) {return 0;}
     if (focus.state == "WAITING") {
-	return Math.floor(100 * (focus.remaining-focus_length) / before_focus);
+	return (100 * (focus.remaining-focus_length) / before_focus);
     }
     if (focus.state == "DONE") { return 100; }
     if (focus.state == "EVALUATING") { return 100; }
-    return 100 - Math.floor(100 * focus.remaining / focus_length);
+    return 100 - (100 * focus.remaining / focus_length);
 }
 
 Meteor.Router.add({
@@ -131,7 +120,7 @@ Template.home.team = function() {
 
 Template.team_summary.members = function() { return members(this); }
 Template.team_summary.first_members = function() { return members(this, 5); }
-Template.team_summary.completion = function() { return completion(this._id); }
+Template.completion.completion = function() { return completion(this._id); }
 Template.team_summary.username = function() { return username(this); }
 Template.team_summary.avatar = function () { return avatar(this); }
 Template.team_summary.current_task = function(user, team) {
@@ -157,15 +146,17 @@ Template.team_add.events({
     }
 });
 
-Template.team.current_team = function() {
-    return Teams.findOne({_id: Session.get('currentTeamId')});
-}
+Template.team.current_team = function() { return Teams.findOne({_id: Session.get('currentTeamId')}); }
+Template.team.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }}); }
 
-Template.team.current_focus = function() {
-    return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }});
-}
+Template.team_title.current_team = function() { return Teams.findOne({_id: Session.get('currentTeamId')}); }
+Template.team_title.current_task = function() { return current_task(Meteor.user(), Session.get('currentTeamId'));}
 
-Template.team.is_current_focus_running = function() {
+Template.focus.current_team = function() { return Teams.findOne({_id: Session.get('currentTeamId')}); }
+Template.focus.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }}); }
+Template.focus.current_task = function() { return current_task(Meteor.user(), Session.get('currentTeamId'));}
+
+Template.focus.is_current_focus_running = function() {
     var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
     if (!focus) {return false;}
 
@@ -176,7 +167,7 @@ Template.team.is_current_focus_running = function() {
     return false;
 }
 
-Template.team.is_current_focus_finished = function() {
+Template.focus.is_current_focus_finished = function() {
     var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
     if (focus.state == "EVALUATING") {
 	if (running) {
@@ -189,10 +180,10 @@ Template.team.is_current_focus_finished = function() {
     return false;
 }
 
-Template.team.completion = function() { return completion(Session.get('currentTeamId')); }
-Template.team.beforeCompletion = function() { return -completion(Session.get('currentTeamId')); }
+Template.focus.completion = function() { return completion(Session.get('currentTeamId')); }
+Template.focus.beforeCompletion = function() { return -completion(Session.get('currentTeamId')); }
 
-Template.team.countdown = function() {
+Template.focus.countdown = function() {
     var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
     if (!focus) {
 	return "--:--";
@@ -207,11 +198,50 @@ Template.team.countdown = function() {
     return minutes + ":" + seconds;
 }
 
-Template.team.current_task = function() {
-    return current_task(Meteor.user(), Session.get('currentTeamId'));
-}
+Template.focus.events({
+    'click button#focus-start' : function (ev) {
 
-Template.team.all_members = function() { return members(Teams.findOne({_id:Session.get('currentTeamId')})); }
+        var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
+        Focus.insert({team:Session.get('currentTeamId'), state:"WAITING", remaining:focus_length + before_focus});
+
+    },
+    'submit form#next-focus' : function (ev) {
+        var $form = $(ev.currentTarget);
+        var focus = Focus.findOne({_id: $form.attr("data-focus")});
+        var task = Tasks.findOne({focus: focus._id, user:Meteor.userId()});
+
+        if (task) {
+            Tasks.update({_id: task._id}, {$set: {label: $form.children("input[name=task]").val()}});
+        } else {
+            Tasks.insert({focus:focus._id, label:$form.children("input[name=task]").val(), user:Meteor.userId()});
+            var team = Teams.findOne({_id:Session.get("currentTeamId")});
+
+            if (!_.contains(team.members, Meteor.userId())) {
+                Teams.update({_id:Session.get("currentTeamId")}, {$push:{members:Meteor.userId()}});
+            }
+        }
+        return false;
+    },
+    'click button.focus-value' : function (ev) {
+        var $button = $(ev.currentTarget);
+    $button.siblings().removeClass("active");
+    $button.addClass("active");
+        var task = Tasks.findOne({_id:$button.attr("data-task")});
+        Tasks.update({_id: task._id}, {$set: {value: parseInt($button.val())}});
+    },
+    'click button.skip-evaluation' : function (ev) {
+    var $button = $(ev.currentTarget);
+    Focus.update({_id:$button.attr("data-focus")}, {$set: {state:"DONE"}});
+    }
+});
+
+Template.members.all_members = function() { return members(Teams.findOne({_id:Session.get('currentTeamId')})); }
+
+Template.members.username = function() { return username(this); }
+Template.members.avatar = function () { return avatar(this); }
+
+
+Template.stats.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }}); }
 
 Template.stats.old_tasks = function() {
     var values = {};
@@ -237,40 +267,6 @@ Template.stats.values = function() {
     return _.pluck(this[1],"value")
 }
 
-Template.team.username = function() { return username(this); }
-Template.team.avatar = function () { return avatar(this); }
-
-Template.team.events({
-    'click button#focus-start' : function (ev) {
-
-        var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
-        Focus.insert({team:Session.get('currentTeamId'), start_time: undefined, state:"WAITING", remaining:focus_length + before_focus});
-
-    },
-    'submit form#next-focus' : function (ev) {
-        var $form = $(ev.currentTarget);
-        var focus = Focus.findOne({_id: $form.attr("data-focus")});
-        var task = Tasks.findOne({focus: focus._id, user:Meteor.userId()});
-
-        if (task) {
-            Tasks.update({_id: task._id}, {$set: {label: $form.children("input[name=task]").val()}});
-        } else {
-            Tasks.insert({focus:focus._id, label:$form.children("input[name=task]").val(), user:Meteor.userId()});
-        }
-        return false;
-    },
-    'click button.focus-value' : function (ev) {
-        var $button = $(ev.currentTarget);
-	$button.siblings().removeClass("active");
-	$button.addClass("active");
-        var task = Tasks.findOne({_id:$button.attr("data-task")});
-        Tasks.update({_id: task._id}, {$set: {value: parseInt($button.val())}});
-    },
-    'click button.skip-evaluation' : function (ev) {
-	var $button = $(ev.currentTarget);
-	Focus.update({_id:$button.attr("data-focus")}, {$set: {state:"DONE"}});
-    }
-});
 
 
 
