@@ -115,9 +115,7 @@ Template.header.status = function() {
 Template.header.first_name = function () { return Meteor.user().profile.first_name; };
 Template.header.avatar = function () { return avatar(Meteor.user()); };
 
-Template.home.team = function() {
-    return Teams.find().fetch();
-}
+Template.home.team = function() { return Teams.find(); }
 
 Template.team_summary.members = function() { return members(this); }
 Template.team_summary.first_members = function() { return members(this, 5); }

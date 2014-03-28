@@ -50,12 +50,15 @@ div.team-summary h3 {
 }
 
 div.team-summary {
+    width:100%;
     padding:10px;
     margin-bottom:20px;
     border-radius:5px;
     border:1px solid rgb(200,200,200);
     float:left;
     background:rgb(155,155,155);
+    min-height:110px;
+    position:relative;
 }
 
 div.team-summary a, .etc {
@@ -81,6 +84,7 @@ input[type=text] {
 
 div.focus {
     position:relative;
+    padding:10px;
     width:100%;
     margin-bottom:20px;
     border-radius:5px;

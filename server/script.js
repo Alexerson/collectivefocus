@@ -29,7 +29,7 @@ var update_focus = function(focus) {
 		    Focus.update({_id: focus._id}, {$set: {state: focus.state}});
 		    return;
 		}
-	}	
+	}
 	if (focus.remaining <= 0) {
 
 	    var tasks = Tasks.find({focus: focus._id, value:undefined});
