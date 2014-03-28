@@ -10,6 +10,9 @@ function generate_color() {
 var focus_length = 25 * 60; // temps en secondes
 var before_focus = 30;
 
+var focus_length = 25; // temps en secondes
+var before_focus = 5;
+
 var update_focus = function(focus) {
 
     if (focus.state == "WAITING") {

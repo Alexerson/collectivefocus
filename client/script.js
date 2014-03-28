@@ -6,6 +6,13 @@
 var focus_length = 25 * 60; // temps en secondes
 var before_focus = 30;
 
+var focus_length = 25; // temps en secondes
+var before_focus = 5;
+
+var running = false;
+
+Notification.requestPermission();
+
 Deps.autorun(function () {
 
     Meteor.subscribe("all-teams");
@@ -93,6 +100,8 @@ Meteor.Router.add({
 });
 
 Meteor.Router.beforeRouting = function(route) {
+    document.title = "Collective Focus";
+    running = false;
     $("body").removeClass();
     if (route.path == "/") {
         $("body").addClass("home");
@@ -159,12 +168,25 @@ Template.team.current_focus = function() {
 Template.team.is_current_focus_running = function() {
     var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
     if (!focus) {return false;}
-    return focus.state == "RUNNING";
+
+    if (focus.state == "RUNNING") {
+	running = true;
+	return true;
+    }
+    return false;
 }
 
 Template.team.is_current_focus_finished = function() {
     var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
-    return focus.state == "EVALUATING";
+    if (focus.state == "EVALUATING") {
+	if (running) {
+	    document.title = "Collective Focus";
+	    new Notification("Le focus est terminé.");
+	    running = false;
+	}
+	return true;
+    }
+    return false;
 }
 
 Template.team.completion = function() { return completion(Session.get('currentTeamId')); }
@@ -181,6 +203,7 @@ Template.team.countdown = function() {
     var minutes = Math.floor(last / 60);
     var seconds = last % 60;
     if (seconds < 10) {seconds = "0"+seconds;}
+    document.title = "(" + minutes + ":" + seconds + ") Collective Focus";
     return minutes + ":" + seconds;
 }
 
@@ -188,18 +211,7 @@ Template.team.current_task = function() {
     return current_task(Meteor.user(), Session.get('currentTeamId'));
 }
 
-Template.team.all_members = function() {
-    var focus = Focus.find({team: Session.get('currentTeamId')});
-    var users_id = [];
-    focus.forEach(function(focus) {
-	var tasks = Tasks.find({focus: focus._id});
-	tasks.forEach(function (task) {
-	    users_id.push(task.user);
-	});
-    });
-    users_id = _.unique(users_id);
-    return Users.find({_id: {$in: users_id}});
-}
+Template.team.all_members = function() { return members(Teams.findOne({_id:Session.get('currentTeamId')})); }
 
 Template.stats.old_tasks = function() {
     var values = {};
@@ -259,6 +271,8 @@ Template.team.events({
 	Focus.update({_id:$button.attr("data-focus")}, {$set: {state:"DONE"}});
     }
 });
+
+
 
 /*
 

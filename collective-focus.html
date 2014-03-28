@@ -110,7 +110,7 @@
 
 <template name="team_summary">
   <div class="completion" style="left:0; width:{{completion}}%;
-  background:{{color1}}; "></div>
+				 background:{{color1}}; "></div>
   <a href="/team/{{_id}}">
     <h3>{{name}}</h3>
   </a>
@@ -130,7 +130,6 @@
   {{#if remaining_members_count}}
   <div class="etc">+ {{remaining_members_count}}<br/> others</div>
   {{/if}}
-
 </template>
 
 <template name="team_add">
