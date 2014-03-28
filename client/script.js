@@ -31,10 +31,11 @@ var avatar = function(user) {
 
     _.defer(function() {$("[data-toggle=tooltip]").tooltip()});
 
-    if (user.services.twitter) {
-	if (user.services.twitter.profile_image_url) {
-	    return user.services.twitter.profile_image_url;
-	}
+    if (user.services.twitter && user.services.twitter.profile_image_url) {
+	return user.services.twitter.profile_image_url;
+    }
+    if (user.services.facebook && user.services.facebook.id) {
+	return "http://graph.facebook.com/"+user.services.facebook.id+"/picture"
     }
     if (user.profile && user.profile.md5) {
 	return "http://www.gravatar.com/avatar/"+user.profile.md5+"?s=50&d=identicon";
