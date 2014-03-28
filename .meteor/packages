@@ -9,3 +9,11 @@ preserve-inputs
 underscore
 accounts-base
 router
+autopublish
+accounts-ui
+accounts-twitter
+accounts-facebook
+accounts-password
+accounts-github
+crypto-md5
+collection-hooks
