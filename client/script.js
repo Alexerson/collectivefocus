@@ -40,7 +40,7 @@ var avatar = function(user) {
 }
 
 var username = function(user) {
-    return user.profile && user.profile.name || user.username || user.email ;
+    return user.profile && user.profile.name || user.username || user.emails && user.emails[0].address || this[0];
 }
 
 var members = function(team, limit) {
@@ -219,7 +219,7 @@ Template.stats.old_tasks = function() {
 Template.stats.user = function() {
     var user =  Users.findOne({_id:this[0]});
     if (!user) { return this[0]; }
-    return user.username || user.emails && user.emails[0].address || this[0];
+    return username(user);
 }
 Template.stats.values = function() {
     return _.pluck(this[1],"value")
