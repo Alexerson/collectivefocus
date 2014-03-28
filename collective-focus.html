@@ -154,9 +154,7 @@
 <template name="team">
   {{#if current_team}}
 
-  <h2>
-    {{> team_title}}
-  </h2>
+  <h2>{{> team_title}}</h2>
 
   <div class="focus">
   {{> focus}}
@@ -193,6 +191,8 @@
     <div class="completion" style="right:0; width:{{beforeCompletion}}%; background:rgba(0, 220, 220, 0.5);"></div>
     {{#if is_current_focus_running}}
 
+    {{setTitle countdown}}
+
     {{#if current_task}}
     <div class="countdown">{{countdown}}</div>
     {{else}}
@@ -200,6 +200,8 @@
     {{/if}}
 
     {{else}}
+
+    {{setTitle ""}}
 
     {{#if is_current_focus_finished}}
 

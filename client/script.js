@@ -171,7 +171,6 @@ Template.focus.is_current_focus_finished = function() {
     var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
     if (focus.state == "EVALUATING") {
 	if (running) {
-	    document.title = "Collective Focus";
 	    new Notification("Le focus est terminé.");
 	    running = false;
 	}
@@ -179,6 +178,18 @@ Template.focus.is_current_focus_finished = function() {
     }
     return false;
 }
+
+Handlebars.registerHelper("setTitle", function() {
+  var title = "";
+  for (var i = 0; i < arguments.length - 1; ++i) {
+    title += arguments[i];
+  }
+    if (title) {
+	document.title = "(" + title + ") Collective Focus";
+    } else {
+	document.title = "Collective Focus"
+    }
+});
 
 Template.focus.completion = function() { return completion(Session.get('currentTeamId')); }
 Template.focus.beforeCompletion = function() { return -completion(Session.get('currentTeamId')); }
@@ -194,7 +205,6 @@ Template.focus.countdown = function() {
     var minutes = Math.floor(last / 60);
     var seconds = last % 60;
     if (seconds < 10) {seconds = "0"+seconds;}
-    document.title = "(" + minutes + ":" + seconds + ") Collective Focus";
     return minutes + ":" + seconds;
 }
 
