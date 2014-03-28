@@ -4,6 +4,7 @@ Tasks = new Meteor.Collection("tasks");
 Users = Meteor.users;
 
 var focus_length = 25 * 60; // temps en secondes
+var before_focus = 30;
 
 if (typeof String.prototype.trim !== 'function') {
     String.prototype.trim = function () {
