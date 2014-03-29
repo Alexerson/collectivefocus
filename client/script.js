@@ -27,6 +27,8 @@ Deps.autorun(function () {
     }*/
 });
 
+Meteor.setInterval(function(){Session.set("currentTime",new Date())},1000);
+
 var avatar = function(user) {
 
     _.defer(function() {$("[data-toggle=tooltip]").tooltip()});
@@ -53,7 +55,7 @@ var members = function(team, limit) {
     if (limit) {
 	return Users.find({_id: {$in: users_id}}, {limit:limit});
     }
-    return Users.find({_id: {$in: users_id}});
+    return Users.find({_id: {$in: users_id}}, {sort:{_id:1}});
 };
 
 var current_task = function (user, team_id) {
@@ -67,12 +69,13 @@ var current_task = function (user, team_id) {
 var completion = function(team_id) {
     var focus = Focus.findOne({team: team_id}, { sort: { start_time: -1 }});
     if (!focus) {return 0;}
+    var remaining = (focus.end_time - Session.get("currentTime"))/1000;
     if (focus.state == "WAITING") {
-	return (100 * (focus.remaining-focus_length) / before_focus);
+	return (100 * (remaining-focus_length) / before_focus);
     }
     if (focus.state == "DONE") { return 100; }
     if (focus.state == "EVALUATING") { return 100; }
-    return 100 - (100 * focus.remaining / focus_length);
+    return 100 - (100 * remaining / focus_length);
 }
 
 Meteor.Router.add({
@@ -199,7 +202,7 @@ Template.focus.countdown = function() {
 	return "--:--";
     }
 
-    var last = focus.remaining ;
+    var last = Math.floor((focus.end_time - Session.get("currentTime"))/1000);
     if (last < 0) {last = 0};
     var minutes = Math.floor(last / 60);
     var seconds = last % 60;
@@ -211,7 +214,7 @@ Template.focus.events({
     'click button#focus-start' : function (ev) {
 
         var focus = Focus.findOne({team: Session.get('currentTeamId')}, { sort: { start_time: -1 }});
-        Focus.insert({team:Session.get('currentTeamId'), state:"WAITING", remaining:focus_length + before_focus});
+        Focus.insert({team:Session.get('currentTeamId')});
 
     },
     'submit form#next-focus' : function (ev) {
@@ -250,21 +253,57 @@ Template.members.username = function() { return username(this); }
 Template.members.avatar = function () { return avatar(this); }
 
 
-Template.stats.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }}); }
+Template.stats.hide = function() { return false; return Focus.find({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}).count() != 0; }
 
-Template.stats.old_tasks = function() {
-    var values = {};
+Template.stats.show_stats = function() {
+
+    var team = Teams.findOne({_id:Session.get("currentTeamId")});
+
+    if (!team) {return; }
+    var users = team.members;
     var focuses = Focus.find({team: Session.get('currentTeamId')});
+    var values = {};
+
+    var labels = [];
+
     focuses.forEach(function(focus) {
-	var tasks = Tasks.find({focus: focus._id});
-	tasks.forEach(function (task) {
-	    if (!values[task.user]) {
-		values[task.user] = [];
-	    }
-	    values[task.user].push({value:task.value, focus:task.focus});
+
+	labels.push(focus._id);
+
+	_.each(users, function(user, index) {
+	    var task = Tasks.findOne({focus: focus._id, user:user});
+	    if (!values[user]) { values[user] = []; }
+	    values[user].push(task && task.value || undefined);
+
 	});
     });
-    return _.pairs(values);
+
+    var datasets = []
+    _.each(_.values(values), function(data) {
+	datasets.push({
+			fillColor : "rgba(151,187,205,0.5)",
+			strokeColor : "rgba(151,187,205,1)",
+			pointColor : "rgba(151,187,205,1)",
+			pointStrokeColor : "#fff",
+	    "data":data
+	})
+    });
+    var data = {
+	"labels" : labels,
+	"datasets" : datasets
+    };
+
+    Meteor.defer(function() {
+	if (!document.getElementById("stats-chart")){return;}
+	var ctx = document.getElementById("stats-chart").getContext("2d");
+	new Chart(ctx).Line(data, {
+	    scaleOverride : true,
+	scaleSteps : 5,
+	scaleStepWidth : 20,
+	scaleStartValue : 0,
+	});
+    });
+    return ;
 }
 
 Template.stats.user = function() {
@@ -275,118 +314,3 @@ Template.stats.user = function() {
 Template.stats.values = function() {
     return _.pluck(this[1],"value")
 }
-
-
-
-
-/*
-
-var create_timer = function() {
-    var r = Raphael(10,10, 200, 200),
-    R = 200,
-    init = true,
-    param = {stroke: "#fff", "stroke-width": 30},
-    hash = document.location.hash,
-    marksAttr = {fill: hash || "#444", stroke: "none"},
-    html = [
-        document.getElementById("h"),
-        document.getElementById("m"),
-        document.getElementById("s"),
-        document.getElementById("d"),
-        document.getElementById("mnth"),
-        document.getElementById("ampm")
-    ];
-    // Custom Attribute
-    r.customAttributes.arc = function (value, total, R) {
-        var alpha = 360 / total * value,
-        a = (90 - alpha) * Math.PI / 180,
-        x = 300 + R * Math.cos(a),
-        y = 300 - R * Math.sin(a),
-        color = "hsb(".concat(Math.round(R) / 200, ",", value / total, ", .75)"),
-        path;
-        if (total == value) {
-            path = [["M", 300, 300 - R], ["A", R, R, 0, 1, 1, 299.99, 300 - R]];
-        } else {
-            path = [["M", 300, 300 - R], ["A", R, R, 0, +(alpha > 180), 1, x, y]];
-        }
-        return {path: path, stroke: color};
-    };
-
-    drawMarks(R, 60);
-    var sec = r.path().attr(param).attr({arc: [0, 60, R]});
-    R -= 40;
-    drawMarks(R, 60);
-    var min = r.path().attr(param).attr({arc: [0, 60, R]});
-    R -= 40;
-    drawMarks(R, 12);
-    var hor = r.path().attr(param).attr({arc: [0, 12, R]});
-    R -= 40;
-    drawMarks(R, 31);
-    var day = r.path().attr(param).attr({arc: [0, 31, R]});
-    R -= 40;
-    drawMarks(R, 12);
-    var mon = r.path().attr(param).attr({arc: [0, 12, R]});
-    var pm = r.circle(300, 300, 16).attr({stroke: "none", fill: Raphael.hsb2rgb(15 / 200, 1, .75).hex});
-    html[5].style.color = Raphael.hsb2rgb(15 / 200, 1, .75).hex;
-
-    function updateVal(value, total, R, hand, id) {
-        if (total == 31) { // month
-            var d = new Date;
-            d.setDate(1);
-            d.setMonth(d.getMonth() + 1);
-            d.setDate(-1);
-            total = d.getDate();
-        }
-        var color = "hsb(".concat(Math.round(R) / 200, ",", value / total, ", .75)");
-        if (init) {
-            hand.animate({arc: [value, total, R]}, 900, ">");
-        } else {
-            if (!value || value == total) {
-                value = total;
-                hand.animate({arc: [value, total, R]}, 750, "bounce", function () {
-                    hand.attr({arc: [0, total, R]});
-                });
-            } else {
-                hand.animate({arc: [value, total, R]}, 750, "elastic");
-            }
-        }
-        html[id].innerHTML = (value < 10 ? "0" : "") + value;
-        html[id].style.color = Raphael.getRGB(color).hex;
-    }
-
-    function drawMarks(R, total) {
-        if (total == 31) { // month
-            var d = new Date;
-            d.setDate(1);
-            d.setMonth(d.getMonth() + 1);
-            d.setDate(-1);
-            total = d.getDate();
-        }
-        var color = "hsb(".concat(Math.round(R) / 200, ", 1, .75)"),
-        out = r.set();
-        for (var value = 0; value < total; value++) {
-            var alpha = 360 / total * value,
-            a = (90 - alpha) * Math.PI / 180,
-            x = 300 + R * Math.cos(a),
-            y = 300 - R * Math.sin(a);
-            out.push(r.circle(x, y, 2).attr(marksAttr));
-        }
-        return out;
-    }
-
-    (function () {
-        var d = new Date,
-        am = (d.getHours() < 12),
-        h = d.getHours() % 12 || 12;
-        updateVal(d.getSeconds(), 60, 200, sec, 2);
-        updateVal(d.getMinutes(), 60, 160, min, 1);
-        updateVal(h, 12, 120, hor, 0);
-        updateVal(d.getDate(), 31, 80, day, 3);
-        updateVal(d.getMonth() + 1, 12, 40, mon, 4);
-        pm[(am ? "hide" : "show")]();
-        html[5].innerHTML = am ? "AM" : "PM";
-        setTimeout(arguments.callee, 1000);
-        init = false;
-    })();
-};
-*/

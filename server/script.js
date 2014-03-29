@@ -19,28 +19,24 @@ var update_focus = function(focus) {
 	}
     }
 
-    focus.remaining = focus_length - Math.ceil((new Date() - focus.start_time)/1000) ;
-    Focus.update({_id: focus._id}, {$set: {remaining: focus.remaining}});
-
     if (focus.state == "RUNNING") {
-		var tasks = Tasks.find({focus: focus._id});
-		if (tasks.count() == 0){
-			focus.state = "DONE";
-		    Focus.update({_id: focus._id}, {$set: {state: focus.state}});
-		    return;
-		}
-	}
-	if (focus.remaining <= 0) {
-
-	    var tasks = Tasks.find({focus: focus._id, value:undefined});
-	    if (tasks.count() == 0) {
-		focus.state = "DONE";
-	    } else {
-		focus.state = "EVALUATING";
-	    }
+	var tasks = Tasks.find({focus: focus._id});
+	if (tasks.count() == 0){
+	    focus.state = "DONE";
 	    Focus.update({_id: focus._id}, {$set: {state: focus.state}});
 	    return;
 	}
+    }
+    if (focus.end_time <= new Date()){
+	var tasks = Tasks.find({focus: focus._id, value:undefined});
+	if (tasks.count() == 0) {
+	    focus.state = "DONE";
+	} else {
+	    focus.state = "EVALUATING";
+	}
+	Focus.update({_id: focus._id}, {$set: {state: focus.state}});
+	return;
+    }
 
     Meteor.setTimeout(function() {update_focus(focus);},1000);
 };
@@ -77,9 +73,14 @@ Meteor.startup(function () {
     });
 
     Focus.before.insert(function (userId, focus) {
+	focus.state = "WAITING";
 	var start_time = new Date()
 	start_time.setSeconds(start_time.getSeconds() + before_focus);
 	focus.start_time = start_time;
+	var end_time = new Date();
+	end_time.setSeconds(end_time.getSeconds() + before_focus);
+	end_time.setSeconds(end_time.getSeconds() + focus_length);
+	focus.end_time = end_time;
     });
 
     Focus.after.insert(function (userId, focus) {

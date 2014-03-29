@@ -8,8 +8,6 @@
   <!-- Latest compiled and minified JavaScript -->
   <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
-  <script src="/raphael-min.js"></script>
-
   <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
 </head>
 
@@ -227,7 +225,6 @@
     {{else}}  {{!-- is_finished --}}
 
     {{#if Meteor.userId}}
-
     <h3>What will you focus on?</h3>
     <div class="input-group">
       <form id="next-focus" data-focus="{{current_focus._id}}">
@@ -279,13 +276,8 @@
 </template>
 
 <template name="stats">
-  {{#if current_focus}}
-  {{else}}
-  <h3>Stats</h3>
-  {{#each old_tasks}}
-  <div class="user">
-  {{user}} -- {{values}}
+  <h3 {{#if hide}} class="hidden" {{/if}} >Stats</h3>
+  <canvas id="stats-chart" width="400" height="300"{{#if hide}} class="hidden" {{/if}} ></canvas>
+    {{show_stats}}
   </div>
-  {{/each}}
-  {{/if}}
 </template>
