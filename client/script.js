@@ -253,7 +253,7 @@ Template.members.username = function() { return username(this); }
 Template.members.avatar = function () { return avatar(this); }
 
 
-Template.stats.hide = function() { return false; return Focus.find({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}).count() != 0; }
+Template.stats.hide = function() { return Focus.find({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}).count() != 0; }
 
 Template.stats.show_stats = function() {
 
@@ -281,10 +281,10 @@ Template.stats.show_stats = function() {
     var datasets = []
     _.each(_.values(values), function(data) {
 	datasets.push({
-			fillColor : "rgba(151,187,205,0.5)",
+			fillColor : "rgba(0,0,0,0)",
 			strokeColor : "rgba(151,187,205,1)",
 			pointColor : "rgba(151,187,205,1)",
-			pointStrokeColor : "#fff",
+			pointStrokeColor : "rgba(50,60,70,1)",
 	    "data":data
 	})
     });
