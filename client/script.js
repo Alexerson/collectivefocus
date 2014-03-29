@@ -60,7 +60,7 @@ var members = function(team, limit) {
 
 var current_task = function (user, team_id) {
     if (!user) { return; }
-    var focus = Focus.findOne({team: team_id, state:{$ne:"DONE"}}, {sort: {start_time: -1}});
+    var focus = Focus.findOne({team: team_id, state:{$not:{$in:["DONE","EMPTY"]}}}, {sort: {start_time: -1}});
     if (focus) {
 	return Tasks.findOne({focus: focus._id, user:user._id});
     }
@@ -73,7 +73,7 @@ var completion = function(team_id) {
     if (focus.state == "WAITING") {
 	return (100 * (remaining-focus_length) / before_focus);
     }
-    if (focus.state == "DONE") { return 100; }
+    if (focus.state == "DONE") { return 0; }
     if (focus.state == "EVALUATING") { return 100; }
     return 100 - (100 * remaining / focus_length);
 }
@@ -149,13 +149,13 @@ Template.team_add.events({
 });
 
 Template.team.current_team = function() { return Teams.findOne({_id: Session.get('currentTeamId')}); }
-Template.team.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }}); }
+Template.team.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$not:{$in:["DONE","EMPTY"]}}}, { sort: { start_time: -1 }}); }
 
 Template.team_title.current_team = function() { return Teams.findOne({_id: Session.get('currentTeamId')}); }
 Template.team_title.current_task = function() { return current_task(Meteor.user(), Session.get('currentTeamId'));}
 
 Template.focus.current_team = function() { return Teams.findOne({_id: Session.get('currentTeamId')}); }
-Template.focus.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}, { sort: { start_time: -1 }}); }
+Template.focus.current_focus = function() { return Focus.findOne({team: Session.get('currentTeamId'), state:{$not:{$in:["DONE","EMPTY"]}}}, { sort: { start_time: -1 }}); }
 Template.focus.current_task = function() { return current_task(Meteor.user(), Session.get('currentTeamId'));}
 
 Template.focus.is_current_focus_running = function() {
@@ -253,7 +253,7 @@ Template.members.username = function() { return username(this); }
 Template.members.avatar = function () { return avatar(this); }
 
 
-Template.stats.hide = function() { return Focus.find({team: Session.get('currentTeamId'), state:{$ne:"DONE"}}).count() != 0; }
+Template.stats.hide = function() { return Focus.find({team: Session.get('currentTeamId'), state:{$not:{$in:["DONE","EMPTY"]}}}).count() != 0; }
 
 Template.stats.show_stats = function() {
 
@@ -261,14 +261,14 @@ Template.stats.show_stats = function() {
 
     if (!team) {return; }
     var users = team.members;
-    var focuses = Focus.find({team: Session.get('currentTeamId')});
+    var focuses = Focus.find({team: Session.get('currentTeamId'), state:"DONE"});
     var values = {};
 
     var labels = [];
 
     focuses.forEach(function(focus) {
 
-	labels.push(focus._id);
+	labels.push(focus.start_time.toDateString() + " " + focus.start_time.toLocaleTimeString() );
 
 	_.each(users, function(user, index) {
 	    var task = Tasks.findOne({focus: focus._id, user:user});

@@ -22,7 +22,7 @@ var update_focus = function(focus) {
     if (focus.state == "RUNNING") {
 	var tasks = Tasks.find({focus: focus._id});
 	if (tasks.count() == 0){
-	    focus.state = "DONE";
+	    focus.state = "EMPTY";
 	    Focus.update({_id: focus._id}, {$set: {state: focus.state}});
 	    return;
 	}
